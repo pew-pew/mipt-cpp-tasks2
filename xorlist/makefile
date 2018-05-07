@@ -6,4 +6,4 @@ main: stack_allocator.h main.cpp
 	g++ $(flags) main.cpp -o main
 
 test: xorlist.h test.cpp
-	g++ $(flags) t.cpp -o test
+	g++ $(flags) test.cpp -lgtest -o test

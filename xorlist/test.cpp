@@ -1,65 +1,65 @@
-#include <iostream>
-#include "stack_allocator.h"
+#include <gtest/gtest.h>
 #include "xorlist.h"
-#include <iterator>
-#include <type_traits>
-#include <vector>
+#include <list>
+#include <random>
+#include <iostream>
 
-template class XorList<int>;
+TEST(XorList, stress) {
+    std::mt19937 mt; //(std::random_device());
+    std::uniform_int_distribution<int> intGen(0, 10);
+    auto chance = [&mt](float prob) -> bool { return std::generate_canonical<float, 5>(mt) < prob; };
 
-int main_() {
-    /*
-    XorList<int> list;
-    list.push_back(5);
-    list.push_back(10);
-    
-    list.insert_before(std::next(list.begin()), 3);
-    for (auto it = list.begin(); it != list.end(); it++)
-        std::cout << *it << " ";
-    std::cout << std::endl;
-    
-    list.pop_back();
-    */
+    std::list<int> stdList;
+    XorList<int> xorList;
+    for (int iter = 0; iter < 1000; iter++) {
+        if (chance(0.7)) {
+            int val = intGen(mt);
+            
+            if (chance(0.5)) {
+                if (chance(0.5)) {
+                    stdList.push_back(val);
+                    xorList.push_back(val);
+                } else {
+                    stdList.push_front(val);
+                    xorList.push_front(val);
+                }
+            } else {
+                size_t index = std::uniform_int_distribution<int>(0, stdList.size())(mt);
+                auto stdIt = std::next(stdList.begin(), index);
+                auto xorIt = std::next(xorList.begin(), index);
+                stdList.insert(stdIt, val);
+                xorList.insert_before(xorIt, val);
+            }
+        } else if (stdList.size()) {
+            if (chance(0.5)) {
+                if (chance(0.5)) {
+                    stdList.pop_back();
+                    xorList.pop_back();
+                } else {
+                    stdList.pop_front();
+                    xorList.pop_front();
+                }
+            } else {
+                size_t index = std::uniform_int_distribution<int>(0, stdList.size() - 1)(mt);
+                auto stdIt = std::next(stdList.begin(), index);
+                auto xorIt = std::next(xorList.begin(), index);
+                stdList.erase(stdIt);
+                xorList.erase(xorIt);
+            }
+        }
 
-    XorList<int, StackAllocator<int>> list;
-
-    for (int i = 0; i < 10; i++) {
-        if (i % 2) list.push_back(i);
-        else list.push_front(i);
-
-        for (auto it = list.begin(); it != list.end(); it++)
-            std::cout << *it << " ";
-        std::cout << std::endl;
+        ASSERT_EQ(stdList.size(), xorList.size()) << " at iteration " << iter;
+        auto stdIt = stdList.begin();
+        auto xorIt = xorList.begin();
+        for (size_t i = 0; i < stdList.size(); ++i, ++stdIt, ++xorIt) {
+            ASSERT_EQ(*stdIt, *xorIt) << "at index " << i << " at iteration " << iter;
+            ASSERT_TRUE(xorIt != xorList.end()) << " at iteration " << iter;
+        }
+        ASSERT_TRUE(xorIt == xorList.end()) << " at iteration " << iter;
     }
-    
-    {
-        auto l2 = list;
-        for (auto it = l2.begin(); it != l2.end(); it++)
-            std::cout << *it << " ";
-        std::cout << std::endl;
-    }
-    
-    for (auto it = list.begin(); it != list.end(); it++)
-        std::cout << *it << " ";
-    std::cout << std::endl;
-    return 0;
 }
 
-using vec = std::vector<int>;
-using List = XorList<vec>;
-int main() {
-    List list;
-    for (int i = 0; i < 5; i++) {
-        if (i % 2 == 0) list.push_back(vec());
-        else list.push_front(vec());
-
-        for (auto it = list.begin(); it != list.end(); it++)
-            it->push_back(i);
-    }
-
-    for (auto it = list.begin(); it != list.end(); it++) {
-        for (auto x : *it)
-            std::cout << x << " ";
-        std::cout << std::endl;
-    }
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
