@@ -16,10 +16,10 @@ template <typename T, typename... TailTs>
 class Tuple<T, TailTs...> {
 private:
     template <typename Head1, typename... Tail1, typename... Body2>
-    friend Tuple<Head1, Tail1..., Body2...> tupleCatTwo(const Tuple<Head1, Tail1...>& tup1, const Tuple<Body2...>& tup2);
+    friend Tuple<Head1, Tail1..., Body2...> tupleCatTwo(Tuple<Head1, Tail1...> tup1, Tuple<Body2...> tup2);
 
     template <typename... Body2>
-    friend Tuple<Body2...> tupleCatTwo(const Tuple<>&, const Tuple<Body2...> tup2);
+    friend Tuple<Body2...> tupleCatTwo(Tuple<>, Tuple<Body2...> tup2);
 
     template <size_t i, typename Tup, typename std::enable_if<(i > 0), void*>::type>
     friend decltype(auto) get(Tup&& t);
@@ -135,13 +135,13 @@ decltype(auto) get(Tup&&) {
 
 
 template <typename Head1, typename... Tail1, typename... Body2>
-Tuple<Head1, Tail1..., Body2...> tupleCatTwo(const Tuple<Head1, Tail1...>& tup1, const Tuple<Body2...>& tup2) {
-    return Tuple<Head1, Tail1..., Body2...>(tup1.head, tupleCatTwo(tup1.tail, tup2));
+Tuple<Head1, Tail1..., Body2...> tupleCatTwo(Tuple<Head1, Tail1...> tup1, Tuple<Body2...> tup2) {
+    return Tuple<Head1, Tail1..., Body2...>(std::move(tup1).head, tupleCatTwo(std::move(tup1).tail, std::move(tup2)));
 }
 
 template <typename... Body2>
-Tuple<Body2...> tupleCatTwo(const Tuple<>&, const Tuple<Body2...> tup2) {
-    return tup2;
+Tuple<Body2...> tupleCatTwo(Tuple<>, Tuple<Body2...> tup2) {
+    return std::move(tup2);
 }
 
 Tuple<> tupleCat() {
@@ -149,6 +149,6 @@ Tuple<> tupleCat() {
 }
 
 template <typename Head, typename... Tail>
-auto tupleCat(const Head &head, const Tail&... tail) {
-    return tupleCatTwo(Head(head), tupleCat(tail...));
+auto tupleCat(Head&& head, Tail&&... tail) {
+    return tupleCatTwo(std::forward<Head>(head), tupleCat(std::forward<Tail>(tail)...));
 }
