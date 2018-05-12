@@ -102,8 +102,8 @@ public:
 
 
 template <typename... Ts>
-Tuple<Ts...> makeTuple(Ts&&... args) {
-    return Tuple<Ts...>(std::forward<Ts>(args)...);
+Tuple<std::decay<Ts>...> makeTuple(Ts&&... args) {
+    return Tuple<std::decay<Ts>...>(std::forward<Ts>(args)...);
 }
 
 
