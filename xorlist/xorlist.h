@@ -81,16 +81,16 @@ public:
     {}
     
     XorList(size_t count, const T& value = T(), const Allocator& alloc = Allocator()): XorList(alloc) {
-        for (size_t i = 0; i < count; i++)
+        for (size_t i = 0; i < count; ++i)
             push_back(value);
     }
     
     XorList(const XorList& other): XorList() {
-        for (iterator it = other.begin(); it != other.end(); it++)
+        for (iterator it = other.begin(); it != other.end(); ++it)
             push_back(*it);
     }
 
-    XorList(XorList&& other): alloc(std::move(other.alloc)), first(other.first), last(other.last) {
+    XorList(XorList&& other): alloc(std::move(other.alloc)), first(other.first), last(other.last), size_(other.size_) {
         other.first = nullptr;
         other.last = nullptr;
         other.size_ = 0;
@@ -141,7 +141,7 @@ public:
         toggleInsert(prev, mid, next);
         if (first == mid) first = next;
         if (last  == mid) last  = prev;
-        size_--;
+        --size_;
         
         mid->~Node();
         std::allocator_traits<NodeAllocator>::deallocate(alloc, mid, 1);
